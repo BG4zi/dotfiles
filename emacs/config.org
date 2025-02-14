@@ -1,0 +1,159 @@
+#+TITLE: Emacs Config
+#+AUTHOR: ucenik
+#+PROPERTY: header-args :tangle init.el
+
+
+\( v = u + at \)  
+
+* Package Management and Usage
+Here, we can use package-managers like =use-package= or =straight.el=
+
+#+BEGIN_SRC emacs-lisp
+  (require 'package)
+  (setq package-archives '(("melpa" . "https://melpa.org/packages/")
+                           ("gnu"   . "https://elpa.gnu.org/packages/")
+                           ("org"   . "https://orgmode.org/elpa/")))
+  (package-initialize)
+#+END_SRC
+
+* Org Mode Settings
+  
+** Appearance 
+#+BEGIN_SRC emacs-lisp
+  (setq org-hide-leading-stars t)
+  (setq org-startup-indented t)
+
+  (setq org-hide-emphasis-markers t) ;; Hide *bold* markers
+  ;;  (set-face-attribute 'default nil :font "JetBrains Mono" :height 120)
+;;  (set-face-attribute 'org-document-title nil :height 180 :weight 'bold)
+
+
+  (use-package org-modern
+    :ensure t
+    :hook (org-mode . org-modern-mode))
+
+  (setq org-startup-indented t)  ;; Enable indentation
+  (setq org-startup-folded t)    ;; Fold sections at startup
+  (global-visual-line-mode t)    ;; Soft wrap lines
+
+
+
+#+END_SRC
+
+
+
+
+** LaTeX
+
+#+BEGIN_SRC emacs-lisp
+
+  (setq org-preview-latex-process-alist
+      '((dvisvgm :programs ("latex" "dvisvgm")
+                 :description "dvi > svg"
+                 :message "Creating LaTeX preview..."
+                 :image-input-type "dvi"
+                 :image-output-type "svg"
+                 :image-size-adjust (1.7 . 1.5)
+                 :latex-compiler ("latex -interaction nonstopmode -output-directory %o %f")
+                 :image-converter ("dvisvgm %f -n -b min -o %O"))))
+
+(setq org-latex-create-formula-image-program 'dvisvgm)
+
+
+
+#+END_SRC
+
+
+
+* Editor Tweaks
+#+BEGIN_SRC emacs-lisp
+  (setq inhibit-startup-message t) ;; Disable Startup Message
+  (menu-bar-mode -1)               ;; Disable Menu Bar 
+  (tool-bar-mode -1)               ;; Disable Tool Bar
+  (scroll-bar-mode -1)             ;; Disable Scroll Bar
+  (setq ring-bell-function 'ignore) ;; Disable That FUCKED UP Ring Noise 
+
+  (use-package linum-relative
+    :ensure t
+    :config
+    (linum-relative-global-mode))  ;; Relative Line Numbers
+
+  (setq-default tab-width 3)       ;; Tab Width
+  (set-face-attribute 'default nil
+                      :family "Hack"  ;; Change to your preferred font
+                      :height 120)             ;; 120 = 12pt, 140 = 14pt, etc.
+
+  (use-package company
+    :ensure t
+    :init
+    (global-company-mode)
+    (setq company-idle-delay 0)
+    (setq company-minimum-prefix-length 1)
+
+    :config
+    (setq company-backends '((company-capf :with company-yasnippet) company-dabbrev company-files)))
+  (setq company-minimum-prefix-length 2  ;; Start completion after typing 2 characters
+        company-idle-delay 0.1)        ;; Show suggestions quickly
+
+
+  (use-package yasnippet
+    :ensure t
+    :config
+    (yas-global-mode 1))
+
+  (use-package yasnippet-snippets
+    :ensure t)
+
+  (add-hook 'prog-mode-hook #'yas-minor-mode)
+
+  (use-package lsp-mode
+    :ensure t
+    :commands lsp
+    :hook ((c-mode c++-mode rust-mode python-mode) . lsp))
+#+END_SRC
+
+
+* Theme Settings
+#+BEGIN_SRC emacs-lisp
+  (use-package doom-themes
+    :ensure t
+    :config
+    (load-theme 'doom-gruvbox  t))
+
+  (use-package doom-modeline
+    :ensure t
+    :config
+    (doom-modeline-mode 1))
+
+#+END_SRC
+
+
+* Shortcuts
+#+BEGIN_SRC emacs-lisp
+  (global-set-key (kbd "M-£") 'compile)
+  (global-set-key (kbd "M-]") 'string-rectangle)
+  (use-package move-text
+    :ensure t
+    :config
+    (global-set-key (kbd "C-S-c C-S-c") 'mc/edit-lines)
+    (global-set-key (kbd "M-p") 'move-text-line-up)
+    (global-set-key (kbd "M-n") 'move-text-line-down))
+#+END_SRC
+
+
+* Auto-Tangle on Save
+#+BEGIN_SRC emacs-lisp
+  (defun my/org-babel-tangle-config ()
+    "Automatically tangle org file when saving."
+    (when (string-equal (buffer-file-name)
+                        (expand-file-name "~/.emacs.d/config.org"))
+      (org-babel-tangle)))
+
+  (add-hook 'org-mode-hook
+            (lambda ()
+              (add-hook 'after-save-hook #'my/org-babel-tangle-config nil 'local)))
+#+END_SRC
+
+
+
+
